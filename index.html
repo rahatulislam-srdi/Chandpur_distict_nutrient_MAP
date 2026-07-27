@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chandpur District Nutrient Status Map</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        .app-container { display: flex; height: 100vh; }
+        
+        /* সাইডবার স্টাইল */
+        .sidebar {
+            width: 360px;
+            padding: 15px;
+            background: #ffffff;
+            border-right: 2px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .sidebar h2 { 
+            font-size: 15px; 
+            color: #1b4332; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #2d6a4f;
+            padding-bottom: 6px;
+        }
+        
+        select, button {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+        button {
+            background-color: #2d6a4f;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 5px;
+            transition: background 0.3s;
+        }
+        button:hover { background-color: #1b4332; }
+
+        .status-badge {
+            display: inline-block;
+            margin-top: 5px;
+            padding: 4px 8px;
+            font-size: 12px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .old-badge { background: #e74c3c; color: white; }
+        .new-badge { background: #27ae60; color: white; }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 13px;
+        }
+        .info-table td {
+            padding: 6px 4px;
+            border-bottom: 1px solid #eee;
+        }
+        .info-table td:first-child { font-weight: bold; color: #555; width: 40%; }
+
+        .chart-box {
+            height: 200px;
+            position: relative;
+            margin-top: 5px;
+            background: #fafafa;
+            border: 1px solid #eee;
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        /* ফুটার বক্সের স্টাইল */
+        .footer-container {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+        }
+        .footer-box {
+            flex: 1;
+            background: #f4f6f8;
+            border: 1px solid #dcdfe3;
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .footer-box span {
+            display: block;
+            font-size: 10px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .footer-box strong {
+            display: block;
+            font-size: 12px;
+            color: #2c3e50;
+            margin-top: 2px;
+        }
+
+        /* ম্যাপ কন্টেইনার */
+        #map { flex: 1; height: 100%; position: relative; }
+
+        /* লেজেন্ড স্টাইল */
+        .info.legend {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            line-height: 18px;
+            color: #333;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+        .info.legend h4 { margin: 0 0 6px; font-size: 13px; color: #111; }
+        .legend-item { display: flex; align-items: center; margin-bottom: 3px; }
+        .legend-color { width: 18px; height: 18px; margin-right: 8px; border-radius: 2px; border: 1px solid #aaa; flex-shrink: 0; }
+
+        /* North Arrow Style */
+        .north-arrow-control {
+            background: white;
+            padding: 5px 8px;
+            border-radius: 4px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+            text-align: center;
+            font-weight: bold;
+            user-select: none;
+        }
+        .north-arrow-icon {
+            font-size: 22px;
+            display: block;
+            line-height: 1;
+            color: #2c3e50;
+        }
+        .north-text {
+            font-size: 10px;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="sidebar">
+        <h2>chandpur district nutrient status map</h2>
+        
+        <div>
+            <label for="layerSelect"><b>Select Nutrient Layer:</b></label>
+            <select id="layerSelect">
+                <option value="Nitrogen">Nitrogen (N)</option>
+                <option value="Phosphorus">Phosphorus (P)</option>
+                <option value="Potassium">Potassium (K)</option>
+                <option value="Sulphur">Sulphur (S)</option>
+                <option value="Zinc">Zinc (Zn)</option>
+                <option value="Boron">Boron (B)</option>
+                <option value="Calcium">Calcium (Ca)</option>
+                <option value="Magnesium">Magnesium (Mg)</option>
+                <option value="pH">pH</option>
+                <option value="OM">Organic Matter (OM)</option>
+                <option value="Texture">Texture</option>
+            </select>
+        </div>
+
+        <div>
+            <button id="shiftBtn">Shift to NEW Map</button>
+            <span id="modeBadge" class="status-badge old-badge">Showing: OLD MAP</span>
+        </div>
+
+        <hr />
+
+        <div>
+            <h3 id="selected-area-title" style="font-size: 14px; color: #2c3e50;">Click a Mauza on the Map</h3>
+            <table id="propsTable" class="info-table">
+                <tr><td colspan="2" style="text-align:center; color:#888;">No area selected yet</td></tr>
+            </table>
+        </div>
+
+        <div class="chart-box">
+            <canvas id="sidebarChart"></canvas>
+        </div>
+
+        <!-- ফুটার ২টা বক্স -->
+        <div class="footer-container">
+            <div class="footer-box">
+                <span>Prepared By</span>
+                <strong>rahatul islam</strong>
+            </div>
+            <div class="footer-box">
+                <span>Organization</span>
+                <strong>SRDI</strong>
+            </div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+</div>
+
+<!-- Leaflet JS & Chart.js -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>

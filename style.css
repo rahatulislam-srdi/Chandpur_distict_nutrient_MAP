@@ -1,0 +1,102 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body, html {
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+}
+
+.app-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+/* বাম পাশের ফিক্সড সাইডবার */
+.sidebar {
+    width: 380px;
+    background: #222831;
+    border-right: 1px solid #393e46;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    gap: 15px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.sidebar h2 {
+    font-size: 1.2rem;
+    color: #00adb5;
+    border-bottom: 2px solid #393e46;
+    padding-bottom: 8px;
+}
+
+.control-group label {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 5px;
+    color: #b0bec5;
+}
+
+.control-group select {
+    width: 100%;
+    padding: 8px;
+    background: #393e46;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 4px;
+}
+
+/* প্রপার্টিজ ইনফরমেশন কার্ড */
+.info-card {
+    background: #2d3748;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #4a5568;
+}
+
+.info-card h3 {
+    font-size: 14px;
+    color: #ffd700;
+    margin-bottom: 8px;
+}
+
+.props-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.props-table th, .props-table td {
+    padding: 5px 8px;
+    border: 1px solid #4a5568;
+    text-align: left;
+}
+
+.props-table th {
+    background: #1a202c;
+    color: #a0aec0;
+}
+
+/* চার্ট কন্টেইনার */
+.chart-box {
+    position: relative;
+    height: 250px;
+    background: #2d3748;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #4a5568;
+}
+
+/* ডানপাশের ম্যাপ */
+#map {
+    flex: 1;
+    height: 100%;
+}
