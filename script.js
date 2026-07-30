@@ -1,11 +1,9 @@
-// ১. ম্যাপ সেটআপ
 const map = L.map('map').setView([23.2333, 90.6667], 11);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-// North Arrow ডানপাশে উপরে যুক্ত করা
 const northArrow = L.control({ position: 'topright' });
 northArrow.onAdd = function () {
     const div = L.DomUtil.create('div', 'north-arrow-control');
@@ -25,7 +23,6 @@ let activeChartInstance = null;
 let selectedFeatureProps = null;
 let legendControl = null;
 
-// ২. সকল নিউট্রিয়েন্টের নির্দিষ্ট ক্যাটাগরি ও কালার
 const nutrientRanges = {
     'Nitrogen': [
         { label: 'Very Low (0.01 - 0.09)', min: 0.01, max: 0.09, color: '#d73027' },
@@ -115,27 +112,46 @@ const nutrientRanges = {
     ]
 };
 
-// ৩. প্রপার্টি নাম বের করা
-function getPropName(key, mode) {
-    if (key === 'pH') return 'pH';
-    if (key === 'Texture') return mode === 'old' ? 'Texture_ol' : 'Texture_ne';
-    return `${key}_${mode}`;
+function getPossiblePropNames(key, mode) {
+    const isOld = mode === 'old';
+    
+    if (key === 'Texture') {
+        return isOld ? ['texture_ol', 'texture_old', 'texture_o'] : ['texture_ne', 'texture_new', 'texture_n'];
+    }
+    
+    if (key === 'pH') {
+        return isOld ? ['ph_old', 'ph_ol', 'ph_o', 'ph'] : ['ph_new', 'ph_ne', 'ph_n'];
+    }
+
+    if (key === 'Potassium') {
+        return isOld ? ['potassium_old', 'potassium_ol', 'k_old', 'k_ol', 'k_o'] : ['potassium_new', 'potassium_ne', 'k_new', 'k_ne', 'k_n'];
+    }
+
+    if (key === 'Sulphur' || key === 'Sulfur') {
+        return isOld 
+            ? ['sulfur_old', 'sulfur_ol', 'sulphur_old', 'sulphur_ol', 's_old', 's_ol', 's_o'] 
+            : ['sulfur_new', 'sulfur_ne', 'sulphur_new', 'sulphur_ne', 's_new', 's_ne', 's_n'];
+    }
+
+    const baseKey = key.toLowerCase();
+    return isOld ? [`${baseKey}_old`, `${baseKey}_ol`, `${baseKey}_o`] : [`${baseKey}_new`, `${baseKey}_ne`, `${baseKey}_n`];
 }
 
-// ডাটা নেওয়া
 function getFeatureValue(feature, key, mode) {
     if (!feature || !feature.properties) return null;
-    const targetProp = getPropName(key, mode);
+    
+    const possibleNames = getPossiblePropNames(key, mode);
     const props = feature.properties;
     
-    for (let p in props) {
-        if (p.toLowerCase() === targetProp.toLowerCase()) {
-            let val = props[p];
+    for (let propKey in props) {
+        let cleanPropKey = propKey.toLowerCase().trim();
+        
+        if (possibleNames.includes(cleanPropKey)) {
+            let val = props[propKey];
             if (val === null || val === undefined || val === '' || val === 0 || val === '0') {
                 return null;
             }
             
-            // Texture টেক্সট বা কোড হতে পারে
             if (key === 'Texture') {
                 if (typeof val === 'string') {
                     let str = val.toLowerCase().trim();
@@ -153,20 +169,17 @@ function getFeatureValue(feature, key, mode) {
     return null;
 }
 
-// ৪. কালার নির্ধারণ লজিক
 function getColor(val, key) {
     if (val === null || val === undefined) return null;
 
     if (nutrientRanges[key]) {
         const ranges = nutrientRanges[key];
         
-        // Texture এর ক্ষেত্রে সরাসরি মান মেলানো
         if (key === 'Texture') {
             let found = ranges.find(r => r.val === val);
             return found ? found.color : '#bf812d';
         }
 
-        // অন্যান্য নিউট্রিয়েন্টের জন্য রেঞ্জ ম্যাচ করা
         for (let i = 0; i < ranges.length; i++) {
             if (val <= ranges[i].max) return ranges[i].color;
         }
@@ -176,7 +189,6 @@ function getColor(val, key) {
     return '#999999';
 }
 
-// ৫. পলিগনের স্টাইল (খালি ডাটা থাকলে পলিগন সচ্ছ থাকবে)
 function style(feature) {
     const val = getFeatureValue(feature, currentLayerKey, currentMode);
     const color = getColor(val, currentLayerKey);
@@ -200,7 +212,6 @@ function style(feature) {
     };
 }
 
-// ৬. পলিগনে ক্লিক ইভেন্ট
 function onEachFeature(feature, layer) {
     layer.on('click', function () {
         if (geojsonLayer) geojsonLayer.resetStyle();
@@ -217,7 +228,6 @@ function onEachFeature(feature, layer) {
     });
 }
 
-// ৭. ডায়নামিক লেজেন্ড
 function updateLegend() {
     if (legendControl) {
         map.removeControl(legendControl);
@@ -239,7 +249,6 @@ function updateLegend() {
             });
         }
 
-        // ডাটা না থাকলে খালি দেখানোর জন্য
         div.innerHTML += `
             <div class="legend-item" style="margin-top: 6px; border-top: 1px solid #ddd; padding-top: 4px;">
                 <i class="legend-color" style="background: transparent; border: 1px dashed #999;"></i>
@@ -252,7 +261,6 @@ function updateLegend() {
     legendControl.addTo(map);
 }
 
-// ৮. বামপাশের টেবিল আপডেট (Area Field সহ)
 function updateSidebarTable(props) {
     const table = document.getElementById('propsTable');
     if (!table) return;
@@ -263,7 +271,6 @@ function updateSidebarTable(props) {
     const uniName = props.uniname || props.UNINAME || 'N/A';
     const mauzaName = props.mauzname || props.MAUZNAME || 'N/A';
     
-    // Area ফিল্ড থেকে মান নেওয়া
     let rawArea = props.area || props.AREA || props.Area || props.Shape_Area || props.shape_area;
     let areaVal = 'N/A';
     
@@ -283,7 +290,6 @@ function updateSidebarTable(props) {
     `;
 }
 
-// ৯. বার-চার্ট আপডেট
 function updateSidebarChart() {
     const ctx = document.getElementById('sidebarChart');
     if (!ctx || !selectedFeatureProps) return;
@@ -326,7 +332,6 @@ function updateSidebarChart() {
     });
 }
 
-// ১০. রেন্ডারিং
 function renderLayer() {
     if (!geojsonData) return;
     if (geojsonLayer) map.removeLayer(geojsonLayer);
@@ -343,7 +348,6 @@ function renderLayer() {
     }
 }
 
-// ১১. ইভেন্ট লিসেনারস
 document.addEventListener("DOMContentLoaded", function () {
     const layerSelect = document.getElementById('layerSelect');
     if (layerSelect) {
@@ -376,7 +380,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // GeoJSON ফাইল লোড
     fetch('Chandpur.geojson')
         .then(response => {
             if (!response.ok) throw new Error('Chandpur.geojson File Not Found!');
