@@ -85,7 +85,6 @@ body, html {
     color: #a0aec0;
 }
 
-/* চার্ট কন্টেইনার */
 .chart-box {
     position: relative;
     height: 250px;
@@ -95,7 +94,6 @@ body, html {
     border: 1px solid #4a5568;
 }
 
-/* ডানপাশের ম্যাপ */
 #map {
     flex: 1;
     height: 100%;
